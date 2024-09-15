@@ -12,8 +12,8 @@ function AuthorizeView(props: { children: React.ReactNode }) {
     useEffect(() => {
         const checkAuthStatus = async () => {
             if (!isAuthenticated) {
-                await checkAuthorization();
-                if (!isAuthenticated) {
+                const response = await checkAuthorization();
+                if (!response.ok) {
                     router.push('/login');
                 } else {
                     setLoading(false);

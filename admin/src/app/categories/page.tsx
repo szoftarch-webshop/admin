@@ -3,31 +3,15 @@
 import React, { useEffect, useState } from 'react';
 import {
     Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-    Paper, IconButton, Button, Dialog, DialogTitle, DialogContent,
-    DialogActions, TextField, Select, MenuItem, InputLabel, FormControl, TablePagination,
-    Box,
-    Typography
+    Paper, IconButton, Button, Box, Typography, TablePagination
 } from '@mui/material';
 import { Edit, Delete, Add } from '@mui/icons-material';
-
-// Category DTO interface
-interface CategoryDto {
-    id: number;
-    name: string;
-    parentId: number | null;
-    children?: CategoryDto[];
-}
-
-const mockCategories: CategoryDto[] = [
-    { id: 1, name: 'Electronics', parentId: null },
-    { id: 2, name: 'Laptops', parentId: 1 },
-    { id: 3, name: 'Phones', parentId: 1 },
-    { id: 4, name: 'Home Appliances', parentId: null },
-    { id: 5, name: 'Refrigerators', parentId: 4 },
-    { id: 6, name: 'Washing Machines', parentId: 4 },
-];
-
-const categoryApi = "https://localhost:44315/api/Category";
+import AuthorizeView from '../components/AuthorizedView';
+import CategoryDto from '../dtos/categoryDto';
+import { fetchCategories, createCategory, updateCategory, deleteCategory } from '../services/categoryService';
+import CreateCategoryDialog from './CreateCategoryDialog';
+import ConfirmDeleteDialog from './ConfirmDeleteDialog';
+import EditCategoryDialog from './EditCategoryDialog';
 
 const CategoriesPage = () => {
     const [categories, setCategories] = useState<CategoryDto[]>([]);
@@ -43,30 +27,20 @@ const CategoriesPage = () => {
     const [editCategoryName, setEditCategoryName] = useState('');
     const [editParentCategoryId, setEditParentCategoryId] = useState<number | ''>('');
 
-
-
-
     // Fetch categories on load
     useEffect(() => {
-
-        async function fetchCategories() {
-            const response = await fetch(categoryApi);
-            const data = await response.json();
-            setCategories(data);
-        }
-
-        fetchCategories();
-
-
-        //setCategories(mockCategories);
+        loadCategories();
     }, []);
 
-    // Open the create category dialog
+    const loadCategories = async () => {
+        const data = await fetchCategories();
+        setCategories(data);
+    };
+
     const handleOpenDialog = () => {
         setOpenDialog(true);
     };
 
-    // Close the create category dialog
     const handleCloseDialog = () => {
         setOpenDialog(false);
         setNewCategoryName('');
@@ -82,52 +56,31 @@ const CategoriesPage = () => {
 
     const handleUpdateCategory = async () => {
         if (editCategoryId !== null) {
-            const updateCategoryDto = { name: editCategoryName, parentId: editParentCategoryId || null };
-            await fetch(`${categoryApi}/${editCategoryId}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(updateCategoryDto),
-            });
+            await updateCategory(editCategoryId, editCategoryName, editParentCategoryId || null);
             setEditDialogOpen(false);
-
-            // Refresh the categories after updating
-            const response = await fetch(categoryApi);
-            const data = await response.json();
-            setCategories(data);
+            await loadCategories();
         }
     };
 
-    // Handle creating a new category
     const handleCreateCategory = async () => {
-        const createCategoryDto = { name: newCategoryName, parentId: parentCategoryId || null };
-        await fetch(categoryApi, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(createCategoryDto),
-        });
+        await createCategory(newCategoryName, parentCategoryId || null);
         handleCloseDialog();
-        // Refresh categories after creation
-        const response = await fetch(categoryApi);
-        const data = await response.json();
-        setCategories(data);
+        await loadCategories();
     };
 
-    // Open the delete confirmation dialog
     const handleOpenConfirmDeleteDialog = (id: number) => {
         setCategoryToDelete(id);
         setConfirmDeleteDialogOpen(true);
     };
 
-    // Close the delete confirmation dialog
     const handleCloseConfirmDeleteDialog = () => {
         setConfirmDeleteDialogOpen(false);
         setCategoryToDelete(null);
     };
 
-    // Confirm delete
     const handleConfirmDelete = async () => {
         if (categoryToDelete !== null) {
-            await fetch(`${categoryApi}/${categoryToDelete}`, { method: 'DELETE' });
+            await deleteCategory(categoryToDelete);
             setCategories(categories.filter((category) => category.id !== categoryToDelete));
             setConfirmDeleteDialogOpen(false);
             setCategoryToDelete(null);
@@ -140,11 +93,11 @@ const CategoriesPage = () => {
 
     const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         setRowsPerPage(parseInt(event.target.value, 10));
-        setPage(0); // Reset page to 0 when rows per page changes
+        setPage(0);
     };
 
     return (
-        <div>
+        <AuthorizeView>
             <Box
                 sx={{
                     display: 'flex',
@@ -161,13 +114,10 @@ const CategoriesPage = () => {
                     color="primary"
                     startIcon={<Add />}
                     onClick={handleOpenDialog}
-                    sx={{}}
                 >
                     Add New
                 </Button>
             </Box>
-
-            {/* Categories Table */}
 
             <TableContainer component={Paper} elevation={3} sx={{ width: '80%', margin: '0 auto', marginTop: "30px" }}>
                 <Table>
@@ -176,7 +126,7 @@ const CategoriesPage = () => {
                             <TableCell>Id</TableCell>
                             <TableCell>Name</TableCell>
                             <TableCell>Parent Name</TableCell>
-                            <TableCell>Actions</TableCell>
+                            <TableCell style={{ width: 100 }}>Actions</TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
@@ -208,88 +158,35 @@ const CategoriesPage = () => {
                 />
             </TableContainer>
 
+            <CreateCategoryDialog
+                open={openDialog}
+                onClose={handleCloseDialog}
+                onCreate={handleCreateCategory}
+                newCategoryName={newCategoryName}
+                setNewCategoryName={setNewCategoryName}
+                parentCategoryId={parentCategoryId}
+                setParentCategoryId={setParentCategoryId}
+                categories={categories}
+            />
 
-            {/* Create Category Dialog */}
-            <Dialog open={openDialog} onClose={handleCloseDialog}>
-                <DialogTitle>Create Category</DialogTitle>
-                <DialogContent>
-                    <TextField
-                        autoFocus
-                        margin="normal"
-                        label="Category Name"
-                        fullWidth
-                        value={newCategoryName}
-                        onChange={(e) => setNewCategoryName(e.target.value)}
-                    />
-                    <FormControl fullWidth margin="normal">
-                        <InputLabel id="parent-category-select-label">Parent Category</InputLabel>
-                        <Select
-                            labelId="parent-category-select-label"
-                            label="Parent Category"
-                            value={parentCategoryId}
-                            onChange={(e) => setParentCategoryId(e.target.value as number | '')}
-                        >
-                            <MenuItem value="">None</MenuItem>
-                            {categories.map((category) => (
-                                <MenuItem key={category.id} value={category.id}>
-                                    {category.name}
-                                </MenuItem>
-                            ))}
-                        </Select>
-                    </FormControl>
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={handleCloseDialog}>Cancel</Button>
-                    <Button onClick={handleCreateCategory} color="primary">Create</Button>
-                </DialogActions>
-            </Dialog>
-            {/* Delete Confirmation Dialog */}
-            <Dialog open={confirmDeleteDialogOpen} onClose={handleCloseConfirmDeleteDialog}>
-                <DialogTitle>Confirm Deletion</DialogTitle>
-                <DialogContent>
-                    <Typography >Are you sure you want to delete this category?</Typography>
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={handleCloseConfirmDeleteDialog}>Cancel</Button>
-                    <Button onClick={handleConfirmDelete} color="error">Delete</Button>
-                </DialogActions>
-            </Dialog>
-            <Dialog open={editDialogOpen} onClose={() => setEditDialogOpen(false)}>
-                <DialogTitle>Edit Category</DialogTitle>
-                <DialogContent>
-                    <TextField
-                        autoFocus
-                        margin="normal"
-                        label="Category Name"
-                        fullWidth
-                        value={editCategoryName}
-                        onChange={(e) => setEditCategoryName(e.target.value)}
-                    />
-                    <FormControl fullWidth margin="normal">
-                        <InputLabel id="edit-parent-category-select-label">Parent Category</InputLabel>
-                        <Select
-                            labelId="edit-parent-category-select-label"
-                            label="Parent Category"
-                            value={editParentCategoryId}
-                            onChange={(e) => setEditParentCategoryId(e.target.value as number | '')}
-                        >
-                            <MenuItem value="">None</MenuItem>
-                            {categories
-                                .filter((category) => category.id !== editCategoryId) // Exclude the current category being edited
-                                .map((category) => (
-                                    <MenuItem key={category.id} value={category.id}>
-                                        {category.name}
-                                    </MenuItem>
-                                ))}
-                        </Select>
-                    </FormControl>
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setEditDialogOpen(false)}>Cancel</Button>
-                    <Button onClick={handleUpdateCategory} color="primary">Update</Button>
-                </DialogActions>
-            </Dialog>
-        </div>
+            <ConfirmDeleteDialog
+                open={confirmDeleteDialogOpen}
+                onClose={handleCloseConfirmDeleteDialog}
+                onConfirm={handleConfirmDelete}
+            />
+
+            <EditCategoryDialog
+                open={editDialogOpen}
+                onClose={() => setEditDialogOpen(false)}
+                onUpdate={handleUpdateCategory}
+                editCategoryName={editCategoryName}
+                setEditCategoryName={setEditCategoryName}
+                editParentCategoryId={editParentCategoryId}
+                setEditParentCategoryId={setEditParentCategoryId}
+                categories={categories}
+                editCategoryId={editCategoryId}
+            />
+        </AuthorizeView>
     );
 };
 

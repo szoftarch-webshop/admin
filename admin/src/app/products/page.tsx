@@ -3,42 +3,40 @@
 import React, { useEffect, useState } from 'react';
 import {
     Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-    Paper, IconButton, Button, Dialog, DialogTitle, DialogContent,
-    DialogActions, TextField, Select, MenuItem, InputLabel, FormControl, TablePagination,
-    Box,
-    Typography
+    Paper, IconButton, Button, Box, Typography, TextField, Select, MenuItem,
+    FormControl, InputLabel, TablePagination,
+    ListItemText
 } from '@mui/material';
-import { Edit, Delete, Add } from '@mui/icons-material';
-
-interface PaginatedResult<T> {
-    totalItems: number;
-    totalPages: number;
-    currentPage: number;
-    items: T[];
-}
-
-// Product DTO interface
-interface ProductDto {
-    id: number;
-    serialNumber: string;
-    name: string;
-    weight: number;
-    material: string;
-    description: string;
-    price: number;
-    stock: number;
-    imageUrl: string;
-    categoryNames: string[];
-}
-
-const productApi = "https://localhost:44315/api/Product";
+import { Edit, Delete, Add, Visibility } from '@mui/icons-material';
+import AuthorizeView from '../components/AuthorizedView';
+import CategoryDto from '../dtos/categoryDto';
+import ProductDto from '../dtos/productDto';
+import { fetchProducts, saveProduct, deleteProduct } from '../services/productService';
+import { fetchCategories } from '../services/categoryService';
+import CreateEditProductDialog from './CreateEditProductDialog';
+import ConfirmDeleteDialog from './ConfirmDeleteDialog';
 
 const ProductsPage = () => {
     const [products, setProducts] = useState<ProductDto[]>([]);
-    const [totalPages, setTotalPages] = useState<number>(0);
-    const [currentPage, setCurrentPage] = useState<number>(1);
-    const [openDialog, setOpenDialog] = useState(false);
-    const [newProduct, setNewProduct] = useState({
+    const [categories, setCategories] = useState<CategoryDto[]>([]);
+    const [dialogOpen, setDialogOpen] = useState(false);
+    const [editProduct, setEditProduct] = useState<ProductDto | null>(null);
+    const [confirmDeleteDialogOpen, setConfirmDeleteDialogOpen] = useState(false);
+    const [productToDelete, setProductToDelete] = useState<number | null>(null);
+    const [page, setPage] = useState(0);
+    const [rowsPerPage, setRowsPerPage] = useState(5);
+    const [viewOnlyDialog, setViewOnlyDialog] = useState(false);
+
+    const [searchTerm, setSearchTerm] = useState('');
+    const [minPrice, setMinPrice] = useState<number | ''>('');
+    const [maxPrice, setMaxPrice] = useState<number | ''>('');
+    const [category, setCategory] = useState<string>('');
+    const [material, setMaterial] = useState<string>('');
+    const [sortBy, setSortBy] = useState<string>('name');
+    const [sortDirection, setSortDirection] = useState<string>('asc');
+
+    const defaultProduct: ProductDto = {
+        id: 0,
         serialNumber: '',
         name: '',
         weight: 0,
@@ -47,121 +45,58 @@ const ProductsPage = () => {
         price: 0,
         stock: 0,
         imageUrl: '',
-        categories: []
-    });
-    const [confirmDeleteDialogOpen, setConfirmDeleteDialogOpen] = useState(false);
-    const [productToDelete, setProductToDelete] = useState<number | null>(null);
-    const [page, setPage] = useState(0);
-    const [rowsPerPage, setRowsPerPage] = useState(5);
-    const [editDialogOpen, setEditDialogOpen] = useState(false);
-    const [editProduct, setEditProduct] = useState<ProductDto | null>(null);
+        categoryNames: []
+    };
 
-    // Fetch products on load
     useEffect(() => {
-        const fetchProducts = async (page: number) => {
-            try {
-                const response = await fetch(productApi);
-                const data: PaginatedResult<ProductDto> = await response.json();
+        fetchProducts(sortBy, sortDirection, minPrice, maxPrice, category, material, searchTerm)
+            .then(data => setProducts(data.items))
+            .catch(console.error);
 
-                // Update state with the paginated result
-                setProducts(data.items);
-                setTotalPages(data.totalPages);
-                setCurrentPage(data.currentPage);
-            } catch (error) {
-                console.error('Error fetching products:', error);
-            }
-        };
+        fetchCategories().then(setCategories).catch(console.error);
+    }, [sortBy, sortDirection, minPrice, maxPrice, category, material, searchTerm]);
 
-        fetchProducts(currentPage);
-    }, [currentPage]);  // fetch new products when the page changes
-
-    // Open the create product dialog
-    const handleOpenDialog = () => {
-        setOpenDialog(true);
+    const handleOpenDialog = (product: ProductDto | null = null, mode: 'edit' | 'view' = 'edit') => {
+        if (mode === 'view') {
+            setEditProduct(product || null);
+            setViewOnlyDialog(true);
+        } else {
+            setEditProduct(product || { ...defaultProduct });
+            setViewOnlyDialog(false);
+        }
+        setDialogOpen(true);
     };
 
-    // Close the create product dialog
     const handleCloseDialog = () => {
-        setOpenDialog(false);
-        setNewProduct({
-            serialNumber: '',
-            name: '',
-            weight: 0,
-            material: '',
-            description: '',
-            price: 0,
-            stock: 0,
-            imageUrl: '',
-            categories: []
-        });
+        setDialogOpen(false);
+        setEditProduct(null);
     };
 
-    const handleOpenEditDialog = (product: ProductDto) => {
-        setEditProduct(product);
-        setEditDialogOpen(true);
-    };
-
-    const handleUpdateProduct = async () => {
+    const handleSaveProduct = async () => {
         if (editProduct) {
-            const updateProductDto = {
-                serialNumber: editProduct.serialNumber,
-                name: editProduct.name,
-                weight: editProduct.weight,
-                material: editProduct.material,
-                description: editProduct.description,
-                price: editProduct.price,
-                stock: editProduct.stock,
-                imageUrl: editProduct.imageUrl,
-                categories: editProduct.categoryNames
-            };
-            await fetch(`${productApi}/${editProduct.id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(updateProductDto),
-            });
-            setEditDialogOpen(false);
-
-            // Refresh the products after updating
-            const response = await fetch(productApi);
-            const data = await response.json();
-            setProducts(data);
+            await saveProduct(editProduct);
+            setDialogOpen(false);
+            fetchProducts(sortBy, sortDirection, minPrice, maxPrice, category, material, searchTerm)
+                .then(data => setProducts(data.items))
+                .catch(console.error);
         }
     };
 
-    // Handle creating a new product
-    const handleCreateProduct = async () => {
-        await fetch(productApi, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(newProduct),
-        });
-        handleCloseDialog();
-
-        // Refresh products after creation
-        const response = await fetch(productApi);
-        const data = await response.json();
-        setProducts(data);
-    };
-
-    // Open the delete confirmation dialog
     const handleOpenConfirmDeleteDialog = (id: number) => {
         setProductToDelete(id);
         setConfirmDeleteDialogOpen(true);
     };
 
-    // Close the delete confirmation dialog
     const handleCloseConfirmDeleteDialog = () => {
         setConfirmDeleteDialogOpen(false);
         setProductToDelete(null);
     };
 
-    // Confirm delete
     const handleConfirmDelete = async () => {
         if (productToDelete !== null) {
-            await fetch(`${productApi}/${productToDelete}`, { method: 'DELETE' });
+            await deleteProduct(productToDelete);
             setProducts(products.filter((product) => product.id !== productToDelete));
             setConfirmDeleteDialogOpen(false);
-            setProductToDelete(null);
         }
     };
 
@@ -171,11 +106,11 @@ const ProductsPage = () => {
 
     const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         setRowsPerPage(parseInt(event.target.value, 10));
-        setPage(0); // Reset page to 0 when rows per page changes
+        setPage(0);
     };
 
     return (
-        <div>
+        <AuthorizeView>
             <Box
                 sx={{
                     display: 'flex',
@@ -191,14 +126,93 @@ const ProductsPage = () => {
                     variant="contained"
                     color="primary"
                     startIcon={<Add />}
-                    onClick={handleOpenDialog}
-                    sx={{}}
+                    onClick={() => handleOpenDialog()}
                 >
                     Add New
                 </Button>
             </Box>
+            
+            <Box
+                sx={{
+                    marginBottom: '20px',
+                    display: 'flex',
+                    gap: '20px',
+                    flexWrap: 'wrap',
+                    width: '80%',
+                    margin: '0 auto',
+                }}
+            >
+                <TextField
+                    label="Search"
+                    variant="outlined"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    sx={{ flex: 2 }}
+                />
+                <TextField
+                    label="Min Price"
+                    variant="outlined"
+                    type="number"
+                    value={minPrice}
+                    onChange={(e) => setMinPrice(e.target.value ? parseInt(e.target.value) : '')}
+                    sx={{ flex: 1 }}
+                />
+                <TextField
+                    label="Max Price"
+                    variant="outlined"
+                    type="number"
+                    value={maxPrice}
+                    onChange={(e) => setMaxPrice(e.target.value ? parseInt(e.target.value) : '')}
+                    sx={{ flex: 1 }}
+                />
+                <TextField
+                    label="Material"
+                    variant="outlined"
+                    value={material}
+                    onChange={(e) => setMaterial(e.target.value)}
+                    sx={{ flex: 1 }}
+                />
+                <FormControl variant="outlined" sx={{ flex: 1 }}>
+                    <InputLabel>Category</InputLabel>
+                    <Select
+                        value={category}
+                        onChange={(e) => setCategory(e.target.value as string)}
+                        label="Category"
+                    >
+                        <MenuItem key={'None'} value={undefined} sx={{padding: '15px'}}>
+                            <ListItemText primary={'None'} />
+                        </MenuItem>
+                        {categories.map((cat) => (
+                            <MenuItem key={cat.id} value={cat.name} sx={{padding: '15px'}}>
+                                <ListItemText primary={cat.name} />
+                            </MenuItem>
+                        ))}
+                    </Select>
+                </FormControl>
+                <FormControl variant="outlined" sx={{ flex: 1 }}>
+                    <InputLabel>Sort By</InputLabel>
+                    <Select
+                        value={sortBy}
+                        onChange={(e) => setSortBy(e.target.value as string)}
+                        label="Sort By"
+                    >
+                        <MenuItem value="name">Name</MenuItem>
+                        <MenuItem value="price">Price</MenuItem>
+                    </Select>
+                </FormControl>
+                <FormControl variant="outlined" sx={{ flex: 1 }}>
+                    <InputLabel>Sort Direction</InputLabel>
+                    <Select
+                        value={sortDirection}
+                        onChange={(e) => setSortDirection(e.target.value as string)}
+                        label="Sort Direction"
+                    >
+                        <MenuItem value="asc">Ascending</MenuItem>
+                        <MenuItem value="desc">Descending</MenuItem>
+                    </Select>
+                </FormControl>
+            </Box>
 
-            {/* Products Table */}
             <TableContainer component={Paper} elevation={3} sx={{ width: '80%', margin: '0 auto', marginTop: "30px" }}>
                 <Table>
                     <TableHead>
@@ -206,10 +220,11 @@ const ProductsPage = () => {
                             <TableCell>Id</TableCell>
                             <TableCell>Name</TableCell>
                             <TableCell>Serial Number</TableCell>
+                            <TableCell>Material</TableCell>
                             <TableCell>Price</TableCell>
                             <TableCell>Stock</TableCell>
                             <TableCell>Categories</TableCell>
-                            <TableCell>Actions</TableCell>
+                            <TableCell style={{ width: 150, textAlign: 'center' }}>Actions</TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
@@ -218,11 +233,15 @@ const ProductsPage = () => {
                                 <TableCell>{product.id}</TableCell>
                                 <TableCell>{product.name}</TableCell>
                                 <TableCell>{product.serialNumber}</TableCell>
+                                <TableCell>{product.material}</TableCell>
                                 <TableCell>{product.price}</TableCell>
                                 <TableCell>{product.stock}</TableCell>
                                 <TableCell>{product.categoryNames.join(', ')}</TableCell>
-                                <TableCell style={{ width: 100 }}>
-                                    <IconButton color="primary" onClick={() => handleOpenEditDialog(product)}>
+                                <TableCell style={{ width: 150, textAlign: 'center'}}>
+                                    <IconButton color="primary" onClick={() => handleOpenDialog(product, 'view')}>
+                                        <Visibility />
+                                    </IconButton>
+                                    <IconButton color="primary" onClick={() => handleOpenDialog(product)}>
                                         <Edit />
                                     </IconButton>
                                     <IconButton color="error" onClick={() => handleOpenConfirmDeleteDialog(product.id)}>
@@ -244,166 +263,22 @@ const ProductsPage = () => {
                 />
             </TableContainer>
 
-            {/* Create Product Dialog */}
-            <Dialog open={openDialog} onClose={handleCloseDialog}>
-                <DialogTitle>Create Product</DialogTitle>
-                <DialogContent>
-                    <TextField
-                        autoFocus
-                        margin="normal"
-                        label="Serial Number"
-                        fullWidth
-                        value={newProduct.serialNumber}
-                        onChange={(e) => setNewProduct({ ...newProduct, serialNumber: e.target.value })}
-                    />
-                    <TextField
-                        margin="normal"
-                        label="Product Name"
-                        fullWidth
-                        value={newProduct.name}
-                        onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
-                    />
-                    <TextField
-                        margin="normal"
-                        label="Weight"
-                        fullWidth
-                        type="number"
-                        value={newProduct.weight}
-                        onChange={(e) => setNewProduct({ ...newProduct, weight: parseFloat(e.target.value) })}
-                    />
-                    <TextField
-                        margin="normal"
-                        label="Material"
-                        fullWidth
-                        value={newProduct.material}
-                        onChange={(e) => setNewProduct({ ...newProduct, material: e.target.value })}
-                    />
-                    <TextField
-                        margin="normal"
-                        label="Description"
-                        fullWidth
-                        value={newProduct.description}
-                        onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
-                    />
-                    <TextField
-                        margin="normal"
-                        label="Price"
-                        fullWidth
-                        type="number"
-                        value={newProduct.price}
-                        onChange={(e) => setNewProduct({ ...newProduct, price: parseInt(e.target.value) })}
-                    />
-                    <TextField
-                        margin="normal"
-                        label="Stock"
-                        fullWidth
-                        type="number"
-                        value={newProduct.stock}
-                        onChange={(e) => setNewProduct({ ...newProduct, stock: parseInt(e.target.value) })}
-                    />
-                    <TextField
-                        margin="normal"
-                        label="Image URL"
-                        fullWidth
-                        value={newProduct.imageUrl}
-                        onChange={(e) => setNewProduct({ ...newProduct, imageUrl: e.target.value })}
-                    />
-                    {/* Add Category Selection logic */}
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={handleCloseDialog} color="primary">Cancel</Button>
-                    <Button onClick={handleCreateProduct} color="primary">Create</Button>
-                </DialogActions>
-            </Dialog>
+            <CreateEditProductDialog
+                open={dialogOpen}
+                onClose={handleCloseDialog}
+                onSave={handleSaveProduct}
+                product={editProduct}
+                categories={categories}
+                setProduct={setEditProduct}
+                viewOnly={viewOnlyDialog}
+            />
 
-            {/* Edit Product Dialog */}
-            <Dialog open={editDialogOpen} onClose={() => setEditDialogOpen(false)}>
-                <DialogTitle>Edit Product</DialogTitle>
-                <DialogContent>
-                    {/* Similar fields as the create dialog, but bound to editProduct */}
-                    {editProduct && (
-                        <>
-                            <TextField
-                                autoFocus
-                                margin="normal"
-                                label="Serial Number"
-                                fullWidth
-                                value={editProduct.serialNumber}
-                                onChange={(e) => setEditProduct({ ...editProduct, serialNumber: e.target.value })}
-                            />
-                            <TextField
-                                margin="normal"
-                                label="Product Name"
-                                fullWidth
-                                value={editProduct.name}
-                                onChange={(e) => setEditProduct({ ...editProduct, name: e.target.value })}
-                            />
-                            <TextField
-                                margin="normal"
-                                label="Weight"
-                                fullWidth
-                                type="number"
-                                value={editProduct.weight}
-                                onChange={(e) => setEditProduct({ ...editProduct, weight: parseFloat(e.target.value) })}
-                            />
-                            <TextField
-                                margin="normal"
-                                label="Material"
-                                fullWidth
-                                value={editProduct.material}
-                                onChange={(e) => setEditProduct({ ...editProduct, material: e.target.value })}
-                            />
-                            <TextField
-                                margin="normal"
-                                label="Description"
-                                fullWidth
-                                value={editProduct.description}
-                                onChange={(e) => setEditProduct({ ...editProduct, description: e.target.value })}
-                            />
-                            <TextField
-                                margin="normal"
-                                label="Price"
-                                fullWidth
-                                type="number"
-                                value={editProduct.price}
-                                onChange={(e) => setEditProduct({ ...editProduct, price: parseInt(e.target.value) })}
-                            />
-                            <TextField
-                                margin="normal"
-                                label="Stock"
-                                fullWidth
-                                type="number"
-                                value={editProduct.stock}
-                                onChange={(e) => setEditProduct({ ...editProduct, stock: parseInt(e.target.value) })}
-                            />
-                            <TextField
-                                margin="normal"
-                                label="Image URL"
-                                fullWidth
-                                value={editProduct.imageUrl}
-                                onChange={(e) => setEditProduct({ ...editProduct, imageUrl: e.target.value })}
-                            />
-                        </>
-                    )}
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setEditDialogOpen(false)} color="primary">Cancel</Button>
-                    <Button onClick={handleUpdateProduct} color="primary">Update</Button>
-                </DialogActions>
-            </Dialog>
-
-            {/* Delete confirmation dialog */}
-            <Dialog open={confirmDeleteDialogOpen} onClose={handleCloseConfirmDeleteDialog}>
-                <DialogTitle>Confirm Delete</DialogTitle>
-                <DialogContent>
-                    Are you sure you want to delete this product?
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={handleCloseConfirmDeleteDialog} color="primary">Cancel</Button>
-                    <Button onClick={handleConfirmDelete} color="secondary">Delete</Button>
-                </DialogActions>
-            </Dialog>
-        </div>
+            <ConfirmDeleteDialog
+                open={confirmDeleteDialogOpen}
+                onClose={handleCloseConfirmDeleteDialog}
+                onConfirm={handleConfirmDelete}
+            />
+        </AuthorizeView>
     );
 };
 

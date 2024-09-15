@@ -1,10 +1,14 @@
-import TextField from "@mui/material/TextField";
-import Image from "next/image";
+"use client";
+
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
-  return (
-    <div className="m-5">
-      <TextField id="outlined-basic" label="Outlined" variant="outlined" />
-    </div>
-  );
+  const router = useRouter();
+
+  useEffect(() => {
+    router.push("/login");
+  }, [router]);
+
+  return null;
 }

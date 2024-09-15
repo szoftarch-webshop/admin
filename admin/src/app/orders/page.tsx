@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import React, { useEffect, useState } from 'react';
 import {
@@ -14,6 +14,7 @@ import { OrderStatus } from '../dtos/orderStatus';
 import OrderDetailsDialog from './OrderDetailsDialog';
 import EditStatusDialog from './EditStatusDialog';
 import ConfirmDeleteDialog from './ConfirmDeleteDialog';
+import OrderFilter from './OrderFilter';
 
 const OrdersPage = () => {
     const [loading, setLoading] = useState<boolean>(true);
@@ -27,15 +28,32 @@ const OrdersPage = () => {
     const [orderToDelete, setOrderToDelete] = useState<number | null>(null);
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(5);
+    const [totalItems, setTotalItems] = useState(0);
+
+    // New states for filtering and sorting
+    const [startDate, setStartDate] = useState<string>('');
+    const [endDate, setEndDate] = useState<string>('');
+    const [status, setStatus] = useState<string>('');
+    const [sortBy, setSortBy] = useState<string>('date');
+    const [sortDirection, setSortDirection] = useState<string>('asc');
 
     useEffect(() => {
-        fetchOrders()
+        fetchOrders(
+            page + 1,
+            rowsPerPage,
+            sortBy,
+            sortDirection,
+            status,
+            startDate,
+            endDate
+        )
             .then(data => {
-                setOrders(data.items)
+                setOrders(data.items);
+                setTotalItems(data.totalItems);
                 setLoading(false);
             })
             .catch(console.error);
-    }, []);
+    }, [page, rowsPerPage, startDate, endDate, status, sortBy, sortDirection]);
 
     const handleOpenDialog = (order: OrderDto) => {
         setViewOrder(order);
@@ -108,82 +126,83 @@ const OrdersPage = () => {
                 <Typography variant="h3">Orders</Typography>
             </Box>
 
+            {/* Filters and Sorting */}
+            <OrderFilter
+                startDate={startDate}
+                endDate={endDate}
+                status={status}
+                sortBy={sortBy}
+                sortDirection={sortDirection}
+                onStartDateChange={setStartDate}
+                onEndDateChange={setEndDate}
+                onStatusChange={setStatus}
+                onSortByChange={setSortBy}
+                onSortDirectionChange={setSortDirection}
+            />
+
             {!loading && (
-            <TableContainer component={Paper} elevation={3} sx={{ width: '80%', margin: '0 auto', marginTop: "30px" }}>
-                <Table>
-                    <TableHead>
-                        <TableRow>
-                            <TableCell>Order ID</TableCell>
-                            <TableCell>Status</TableCell>
-                            <TableCell>Order Date</TableCell>
-                            <TableCell>Invoice ID</TableCell>
-                            <TableCell>Customer Name</TableCell>
-                            <TableCell>Payment Method</TableCell>
-                            <TableCell style={{ width: 150, textAlign: 'center' }}>Actions</TableCell>
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {orders.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((order) => (
-                            <TableRow key={order.id}>
-                                <TableCell>{order.id}</TableCell>
-                                <TableCell>{order.status}</TableCell>
-                                <TableCell>{new Date(order.orderDate).toLocaleDateString()}</TableCell>
-                                <TableCell>{order.invoice.id}</TableCell>
-                                <TableCell>{order.invoice.customerName}</TableCell>
-                                <TableCell>{order.invoice.paymentMethod.name}</TableCell>
-                                <TableCell style={{ width: 150, textAlign: 'center' }}>
-                                    <IconButton color="primary" onClick={() => handleOpenDialog(order)}>
-                                        <Visibility />
-                                    </IconButton>
-                                    <IconButton color="primary" onClick={() => handleOpenStatusDialog(order)}>
-                                        <Edit />
-                                    </IconButton>
-                                    <IconButton color="error" onClick={() => handleOpenConfirmDeleteDialog(order.id)}>
-                                        <Delete />
-                                    </IconButton>
-                                </TableCell>
+                <TableContainer component={Paper} elevation={3} sx={{ width: '80%', margin: '0 auto', marginTop: "30px" }}>
+                    <Table>
+                        <TableHead>
+                            <TableRow>
+                                <TableCell>Order ID</TableCell>
+                                <TableCell>Status</TableCell>
+                                <TableCell>Order Date</TableCell>
+                                <TableCell>Invoice ID</TableCell>
+                                <TableCell>Customer Name</TableCell>
+                                <TableCell>Payment Method</TableCell>
+                                <TableCell style={{ width: 150, textAlign: 'center' }}>Actions</TableCell>
                             </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-                <TablePagination
-                    rowsPerPageOptions={[5, 10, 25]}
-                    component="div"
-                    count={orders.length}
-                    rowsPerPage={rowsPerPage}
-                    page={page}
-                    onPageChange={handleChangePage}
-                    onRowsPerPageChange={handleChangeRowsPerPage}
-                />
-            </TableContainer>
+                        </TableHead>
+                        <TableBody>
+                            {orders
+                                .map((order) => (
+                                    <TableRow key={order.id}>
+                                        <TableCell>{order.id}</TableCell>
+                                        <TableCell>{order.status}</TableCell>
+                                        <TableCell>{new Date(order.orderDate).toLocaleDateString()}</TableCell>
+                                        <TableCell>{order.invoice.id}</TableCell>
+                                        <TableCell>{order.invoice.customerName}</TableCell>
+                                        <TableCell>{order.invoice.paymentMethod.name}</TableCell>
+                                        <TableCell style={{ width: 150, textAlign: 'center' }}>
+                                            <IconButton color="primary" onClick={() => handleOpenDialog(order)}>
+                                                <Visibility />
+                                            </IconButton>
+                                            <IconButton color="primary" onClick={() => handleOpenStatusDialog(order)}>
+                                                <Edit />
+                                            </IconButton>
+                                            <IconButton color="error" onClick={() => handleOpenConfirmDeleteDialog(order.id)}>
+                                                <Delete />
+                                            </IconButton>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                        </TableBody>
+                    </Table>
+                    <TablePagination
+                        rowsPerPageOptions={[5, 10, 25]}
+                        component="div"
+                        count={totalItems}
+                        rowsPerPage={rowsPerPage}
+                        page={page}
+                        onPageChange={handleChangePage}
+                        onRowsPerPageChange={handleChangeRowsPerPage}
+                    />
+                </TableContainer>
             )}
             {loading && (
-                <Box
-                display="flex"
-                justifyContent="center"
-                alignItems="center"
-                height="40vh"
-                >
+                <Box display="flex" justifyContent="center" alignItems="center" height="40vh">
                     <CircularProgress size={80} />
                 </Box>
             )}
 
             {/* Dialog Components */}
             <OrderDetailsDialog open={dialogOpen} onClose={handleCloseDialog} order={viewOrder} />
-            <EditStatusDialog
-                open={statusDialogOpen}
-                onClose={handleCloseStatusDialog}
-                status={statusToEdit}
-                onStatusChange={setStatusToEdit}
-                onSave={handleSaveStatus}
-            />
-            <ConfirmDeleteDialog
-                open={confirmDeleteDialogOpen}
-                onClose={handleCloseConfirmDeleteDialog}
-                onConfirm={handleConfirmDelete}
-            />
+            <EditStatusDialog open={statusDialogOpen} onClose={handleCloseStatusDialog} onSave={handleSaveStatus} status={statusToEdit} onStatusChange={setStatusToEdit} />
+            <ConfirmDeleteDialog open={confirmDeleteDialogOpen} onClose={handleCloseConfirmDeleteDialog} onConfirm={handleConfirmDelete} />
         </AuthorizeView>
     );
 };
 
 export default OrdersPage;
+

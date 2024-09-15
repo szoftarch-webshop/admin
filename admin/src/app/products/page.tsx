@@ -3,10 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import {
     Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-    Paper, IconButton, Button, Box, Typography, TextField, Select, MenuItem,
-    FormControl, InputLabel, TablePagination,
-    ListItemText,
-    CircularProgress
+    Paper, IconButton, Button, Box, Typography, CircularProgress, TablePagination
 } from '@mui/material';
 import { Edit, Delete, Add, Visibility } from '@mui/icons-material';
 import AuthorizeView from '../components/AuthorizedView';
@@ -16,6 +13,7 @@ import { fetchProducts, saveProduct, deleteProduct } from '../services/productSe
 import { fetchCategories } from '../services/categoryService';
 import CreateEditProductDialog from './CreateEditProductDialog';
 import ConfirmDeleteDialog from './ConfirmDeleteDialog';
+import ProductFilter from './ProductFilter';  // Import the new ProductFilter component
 
 const ProductsPage = () => {
     const [loading, setLoading] = useState<boolean>(true);
@@ -27,6 +25,7 @@ const ProductsPage = () => {
     const [productToDelete, setProductToDelete] = useState<number | null>(null);
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(5);
+    const [totalItems, setTotalItems] = useState(0);
     const [viewOnlyDialog, setViewOnlyDialog] = useState(false);
 
     const [searchTerm, setSearchTerm] = useState('');
@@ -50,16 +49,17 @@ const ProductsPage = () => {
         categoryNames: []
     };
 
-    useEffect(() => {
-        fetchProducts(sortBy, sortDirection, minPrice, maxPrice, category, material, searchTerm)
+        useEffect(() => {
+            fetchProducts(page + 1, rowsPerPage, sortBy, sortDirection, minPrice, maxPrice, category, material, searchTerm)
             .then(data => {
-                setProducts(data.items)
+                setProducts(data.items);
+                setTotalItems(data.totalItems);
                 setLoading(false);
             })
             .catch(console.error);
 
-        fetchCategories().then(setCategories).catch(console.error);
-    }, [sortBy, sortDirection, minPrice, maxPrice, category, material, searchTerm]);
+            fetchCategories().then(setCategories).catch(console.error);
+    }, [page, rowsPerPage, sortBy, sortDirection, minPrice, maxPrice, category, material, searchTerm]);
 
     const handleOpenDialog = (product: ProductDto | null = null, mode: 'edit' | 'view' = 'edit') => {
         if (mode === 'view') {
@@ -81,7 +81,7 @@ const ProductsPage = () => {
         if (editProduct) {
             await saveProduct(editProduct);
             setDialogOpen(false);
-            fetchProducts(sortBy, sortDirection, minPrice, maxPrice, category, material, searchTerm)
+            fetchProducts(page + 1, rowsPerPage, sortBy, sortDirection, minPrice, maxPrice, category, material, searchTerm)
                 .then(data => setProducts(data.items))
                 .catch(console.error);
         }
@@ -137,87 +137,24 @@ const ProductsPage = () => {
                 </Button>
             </Box>
             
-            <Box
-                sx={{
-                    marginBottom: '20px',
-                    display: 'flex',
-                    gap: '20px',
-                    flexWrap: 'wrap',
-                    width: '80%',
-                    margin: '0 auto',
-                }}
-            >
-                <TextField
-                    label="Search"
-                    variant="outlined"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    sx={{ flex: 2 }}
-                />
-                <TextField
-                    label="Min Price"
-                    variant="outlined"
-                    type="number"
-                    value={minPrice}
-                    onChange={(e) => setMinPrice(e.target.value ? parseInt(e.target.value) : '')}
-                    sx={{ flex: 1 }}
-                />
-                <TextField
-                    label="Max Price"
-                    variant="outlined"
-                    type="number"
-                    value={maxPrice}
-                    onChange={(e) => setMaxPrice(e.target.value ? parseInt(e.target.value) : '')}
-                    sx={{ flex: 1 }}
-                />
-                <TextField
-                    label="Material"
-                    variant="outlined"
-                    value={material}
-                    onChange={(e) => setMaterial(e.target.value)}
-                    sx={{ flex: 1 }}
-                />
-                <FormControl variant="outlined" sx={{ flex: 1 }}>
-                    <InputLabel>Category</InputLabel>
-                    <Select
-                        value={category}
-                        onChange={(e) => setCategory(e.target.value as string)}
-                        label="Category"
-                    >
-                        <MenuItem key={'None'} value={undefined} sx={{padding: '15px'}}>
-                            <ListItemText primary={'None'} />
-                        </MenuItem>
-                        {categories.map((cat) => (
-                            <MenuItem key={cat.id} value={cat.name} sx={{padding: '15px'}}>
-                                <ListItemText primary={cat.name} />
-                            </MenuItem>
-                        ))}
-                    </Select>
-                </FormControl>
-                <FormControl variant="outlined" sx={{ flex: 1 }}>
-                    <InputLabel>Sort By</InputLabel>
-                    <Select
-                        value={sortBy}
-                        onChange={(e) => setSortBy(e.target.value as string)}
-                        label="Sort By"
-                    >
-                        <MenuItem value="name">Name</MenuItem>
-                        <MenuItem value="price">Price</MenuItem>
-                    </Select>
-                </FormControl>
-                <FormControl variant="outlined" sx={{ flex: 1 }}>
-                    <InputLabel>Sort Direction</InputLabel>
-                    <Select
-                        value={sortDirection}
-                        onChange={(e) => setSortDirection(e.target.value as string)}
-                        label="Sort Direction"
-                    >
-                        <MenuItem value="asc">Ascending</MenuItem>
-                        <MenuItem value="desc">Descending</MenuItem>
-                    </Select>
-                </FormControl>
-            </Box>
-            
+            <ProductFilter
+                searchTerm={searchTerm}
+                setSearchTerm={setSearchTerm}
+                minPrice={minPrice}
+                setMinPrice={setMinPrice}
+                maxPrice={maxPrice}
+                setMaxPrice={setMaxPrice}
+                material={material}
+                setMaterial={setMaterial}
+                category={category}
+                setCategory={setCategory}
+                sortBy={sortBy}
+                setSortBy={setSortBy}
+                sortDirection={sortDirection}
+                setSortDirection={setSortDirection}
+                categories={categories}
+            />
+
             {!loading && (
             <TableContainer component={Paper} elevation={3} sx={{ width: '80%', margin: '0 auto', marginTop: "30px" }}>
                 <Table>
@@ -234,7 +171,7 @@ const ProductsPage = () => {
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {products.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((product) => (
+                        {products.map((product) => (
                             <TableRow key={product.id}>
                                 <TableCell>{product.id}</TableCell>
                                 <TableCell>{product.name}</TableCell>
@@ -261,7 +198,7 @@ const ProductsPage = () => {
                 <TablePagination
                     rowsPerPageOptions={[5, 10, 25]}
                     component="div"
-                    count={products.length}
+                    count={totalItems}
                     rowsPerPage={rowsPerPage}
                     page={page}
                     onPageChange={handleChangePage}

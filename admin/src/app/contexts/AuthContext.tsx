@@ -8,7 +8,7 @@ interface AuthContextType {
     isAuthenticated: boolean;
     login: (email: string, password: string, rememberMe: boolean) => Promise<Response>;
     logout: () => Promise<void>;
-    checkAuthorization: () => Promise<Response>;
+    checkAuthorization: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -54,22 +54,25 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
 
     const checkAuthorization = async () => {
-        const response = await fetch('https://localhost:44315/pingauth', {
-            method: 'GET',
-            credentials: 'include',
-        });
+        try {
+            const response = await fetch('https://localhost:44315/pingauth', {
+                method: 'GET',
+                credentials: 'include',
+            });
 
-        if (response.ok) {
-            setIsAuthenticated(true);
-            const data = await response.json();
-            setUser({ email: data.email });
-        } else {
+            if (response.ok) {
+                const data = await response.json(); // Read body once
+                setIsAuthenticated(true);
+                setUser({ email: data.email });
+            } else {
+                setIsAuthenticated(false);
+                setUser({});
+            }
+        } catch (error) {
             setIsAuthenticated(false);
             setUser({});
         }
-
-        return response;
-    }
+    };
 
     return (
         <AuthContext.Provider value={{ user, isAuthenticated, login, logout, checkAuthorization }}>

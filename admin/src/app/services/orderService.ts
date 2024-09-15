@@ -1,15 +1,44 @@
-// services/orderService.ts
-
 import OrderDto from '../dtos/orderDto';
 import { OrderStatus } from '../dtos/orderStatus';
 import PaginatedResult from '../dtos/paginatedResultDto';
 
 const orderApi = "https://localhost:44315/api/Order";
 
-export async function fetchOrders(): Promise<PaginatedResult<OrderDto>> {
-    try{
-        const response = await fetch(orderApi, { credentials: 'include' });
-        return response.json();
+export async function fetchOrders(
+    pageNumber: number = 1, 
+    pageSize: number = 10, 
+    sortBy: string = "date", 
+    sortDirection: string = "asc", 
+    status?: string, 
+    startDate?: string, 
+    endDate?: string
+): Promise<PaginatedResult<OrderDto>> {
+    try {
+        const queryParams = new URLSearchParams({
+            pageNumber: pageNumber.toString(),
+            pageSize: pageSize.toString(),
+            sortBy,
+            sortDirection
+        });
+        if (status) {
+            queryParams.append('status', status);
+        }
+        if (startDate) {
+            queryParams.append('startDate', startDate);
+        }
+        if (endDate) {
+            queryParams.append('endDate', endDate);
+        }
+
+        const response = await fetch(`${orderApi}?${queryParams.toString()}`, {
+            credentials: 'include',
+        });
+
+        if (!response.ok) {
+            throw new Error(`Error fetching orders: ${response.statusText}`);
+        }
+
+        return await response.json();
     } catch (error) {
         console.error('Error fetching orders:', error);
         throw error;

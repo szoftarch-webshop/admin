@@ -12,17 +12,17 @@ const LoginPage: React.FC = () => {
     const [error, setError] = useState<string>('');
     const [loading, setLoading] = useState<boolean>(true);
     const router = useRouter();
-    const { login, checkAuthorization } = useAuth();
+    const { isAuthenticated, login, checkAuthorization } = useAuth();
 
     useEffect(() => {
         const checkAuthStatus = async () => {
             try {
-                const response = await checkAuthorization();
-                if (response.ok) {
+                await checkAuthorization(); // Since it returns void, we don't need to handle the response
+                if (isAuthenticated)
+                {
                     router.push('/products');
-                } else {
-                    setLoading(false);
                 }
+                setLoading(false);
             } catch (error) {
                 console.error('Error checking authorization:', error);
                 setLoading(false);
@@ -30,7 +30,7 @@ const LoginPage: React.FC = () => {
         };
 
         checkAuthStatus();
-    }, [router]);
+    }, [router, isAuthenticated]);
 
     const handleLogin = async () => {
         try {
@@ -77,7 +77,7 @@ const LoginPage: React.FC = () => {
                     Admin Login
                 </Typography>
                 <TextField
-                    label="Username"
+                    label="Email"
                     variant="outlined"
                     margin="normal"
                     fullWidth
@@ -119,11 +119,7 @@ const LoginPage: React.FC = () => {
                 </Button>
 
                 <Box mt={2} width="100%">
-                    {error ? (
-                        <Alert severity="error">{error}</Alert>
-                    ) : (
-                        <Box height="48px" />
-                    )}
+                    {error && <Alert severity="error">{error}</Alert>}
                 </Box>
             </Box>
         </Container>

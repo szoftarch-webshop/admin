@@ -10,31 +10,21 @@ function AuthorizeView(props: { children: React.ReactNode }) {
     const router = useRouter();
 
     useEffect(() => {
-        const authorize = async () => {
-            try {
-                const response = await checkAuthorization();
-
-                if (response.status === 200) {
-                    const data = await response.json();
-                    setLoading(false);
-                } else if (response.status === 401) {
+        const checkAuthStatus = async () => {
+            if (!isAuthenticated) {
+                await checkAuthorization();
+                if (!isAuthenticated) {
                     router.push('/login');
                 } else {
-                    throw new Error(`Unexpected status code: ${response.status}`);
+                    setLoading(false);
                 }
-            } catch (error) {
-                if (error instanceof Error) {
-                    console.error("Authorization check failed:", error.message);
-                } else {
-                    console.error("Authorization check failed:", error);
-                }
-                router.push('/login');
+            } else {
+                setLoading(false);
             }
         };
-        if(!isAuthenticated) {
-            authorize();
-        }
-    }, [router]);
+        
+        checkAuthStatus();
+    }, [isAuthenticated, checkAuthorization, router]);
 
     if (loading && !isAuthenticated) {
         return (

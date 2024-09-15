@@ -3,30 +3,53 @@ import PaginatedResult from '../dtos/paginatedResultDto';
 
 const productApi = "https://localhost:44315/api/Product";
 
-export const fetchProducts = async (
-    sortBy: string,
-    sortDirection: string,
+export async function fetchProducts(
+    pageNumber: number = 1,
+    pageSize: number = 10,
+    sortBy: string = "name", // or any default sort field for products
+    sortDirection: string = "asc",
     minPrice?: number | '',
     maxPrice?: number | '',
     category?: string,
     material?: string,
     searchTerm?: string
-): Promise<PaginatedResult<ProductDto>> => {
+): Promise<PaginatedResult<ProductDto>> {
     try {
-        const query = `${productApi}?sortBy=${sortBy}&sortDirection=${sortDirection}` +
-            (minPrice ? `&minPrice=${minPrice}` : '') +
-            (maxPrice ? `&maxPrice=${maxPrice}` : '') +
-            (category ? `&category=${category}` : '') +
-            (material ? `&material=${material}` : '') +
-            (searchTerm ? `&searchString=${searchTerm}` : '');
+        const queryParams = new URLSearchParams({
+            pageNumber: pageNumber.toString(),
+            pageSize: pageSize.toString(),
+            sortBy,
+            sortDirection
+        });
+        if (minPrice !== '' && minPrice !== undefined) {
+            queryParams.append('minPrice', minPrice.toString());
+        }
+        if (maxPrice !== '' && maxPrice !== undefined) {
+            queryParams.append('maxPrice', maxPrice.toString());
+        }
+        if (category) {
+            queryParams.append('category', category);
+        }
+        if (material) {
+            queryParams.append('material', material);
+        }
+        if (searchTerm) {
+            queryParams.append('searchString', searchTerm);
+        }
 
-        const response = await fetch(query, { credentials: 'include' });
+        const response = await fetch(`${productApi}?${queryParams.toString()}`, {
+            credentials: 'include',
+        });
+        if (!response.ok) {
+            throw new Error(`Error fetching products: ${response.statusText}`);
+        }
         return await response.json();
     } catch (error) {
         console.error('Error fetching products:', error);
         throw error;
     }
-};
+}
+
 
 export const saveProduct = async (product: ProductDto): Promise<void> => {
     const method = product.id ? 'PUT' : 'POST';

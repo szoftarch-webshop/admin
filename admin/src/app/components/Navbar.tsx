@@ -22,7 +22,7 @@ const Navbar = () => {
   };
 
   return (
-    <AppBar position="static" sx={{ width: '80%', margin: '0 auto' }}>
+    <AppBar position="static" sx={{ width: '80%', margin: '10px auto' }}>
       <Container maxWidth={false} sx={{ padding: 0}}>
         <Toolbar sx={{ display: 'flex', justifyContent: 'space-between'}}>
           <Typography variant="h5" sx={{}}>

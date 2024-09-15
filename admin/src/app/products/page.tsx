@@ -15,6 +15,7 @@ import CreateEditProductDialog from './CreateEditProductDialog';
 import ConfirmDeleteDialog from './ConfirmDeleteDialog';
 import ProductFilter from './ProductFilter';  // Import the new ProductFilter component
 
+
 const ProductsPage = () => {
     const [loading, setLoading] = useState<boolean>(true);
     const [products, setProducts] = useState<ProductDto[]>([]);
@@ -38,6 +39,7 @@ const ProductsPage = () => {
 
     const defaultProduct: ProductDto = {
         id: 0,
+
         serialNumber: '',
         name: '',
         weight: 0,
@@ -45,6 +47,7 @@ const ProductsPage = () => {
         description: '',
         price: 0,
         stock: 0,
+
         imageUrl: '',
         categoryNames: []
     };
@@ -87,6 +90,7 @@ const ProductsPage = () => {
         }
     };
 
+
     const handleOpenConfirmDeleteDialog = (id: number) => {
         setProductToDelete(id);
         setConfirmDeleteDialogOpen(true);
@@ -105,8 +109,10 @@ const ProductsPage = () => {
         }
     };
 
+    // Pagination handlers
     const handleChangePage = (event: React.MouseEvent<HTMLButtonElement> | null, newPage: number) => {
         setPage(newPage);
+        setCurrentPage(newPage + 1); // API pages start from 1
     };
 
     const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {

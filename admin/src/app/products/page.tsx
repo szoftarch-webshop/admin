@@ -112,7 +112,6 @@ const ProductsPage = () => {
     // Pagination handlers
     const handleChangePage = (event: React.MouseEvent<HTMLButtonElement> | null, newPage: number) => {
         setPage(newPage);
-        setCurrentPage(newPage + 1); // API pages start from 1
     };
 
     const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {

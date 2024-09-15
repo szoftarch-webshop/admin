@@ -1,14 +1,14 @@
 "use client";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { Typography } from "@mui/material";
+import AuthorizeView from "./components/AuthorizedView";
 
 export default function Home() {
-  const router = useRouter();
-
-  useEffect(() => {
-    router.push("/login");
-  }, [router]);
-
-  return null;
+  return (
+    <AuthorizeView>
+      <Typography>
+        Home page
+      </Typography>
+    </AuthorizeView>
+  );
 }

@@ -29,7 +29,14 @@ const Navbar = () => {
             Admin Dashboard
           </Typography>
           <Box sx={{ display: 'flex', gap: 2 }}>
-            {['Home', 'Products', 'Categories', 'Orders'].map((text) => (
+            <Button
+                  key={'Home'}
+                  color="inherit"
+                  onClick={() => handleNavigation('/')}
+                >
+                  <Typography>{'Home'}</Typography>
+            </Button>
+            {['Products', 'Categories', 'Orders'].map((text) => (
               <Button
                 key={text}
                 color="inherit"

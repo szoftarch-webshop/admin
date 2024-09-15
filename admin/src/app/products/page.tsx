@@ -17,11 +17,26 @@ import ProductFilter from './ProductFilter';  // Import the new ProductFilter co
 
 
 const ProductsPage = () => {
+    const defaultProduct: ProductDto = {
+        id: 0,
+
+        serialNumber: '',
+        name: '',
+        weight: 0,
+        material: '',
+        description: '',
+        price: 0,
+        stock: 0,
+
+        imageUrl: '',
+        image: null,
+        categoryNames: []
+    };
     const [loading, setLoading] = useState<boolean>(true);
     const [products, setProducts] = useState<ProductDto[]>([]);
     const [categories, setCategories] = useState<CategoryDto[]>([]);
     const [dialogOpen, setDialogOpen] = useState(false);
-    const [editProduct, setEditProduct] = useState<ProductDto | null>(null);
+    const [editProduct, setEditProduct] = useState<ProductDto>(defaultProduct);
     const [confirmDeleteDialogOpen, setConfirmDeleteDialogOpen] = useState(false);
     const [productToDelete, setProductToDelete] = useState<number | null>(null);
     const [page, setPage] = useState(0);
@@ -37,39 +52,25 @@ const ProductsPage = () => {
     const [sortBy, setSortBy] = useState<string>('name');
     const [sortDirection, setSortDirection] = useState<string>('asc');
 
-    const defaultProduct: ProductDto = {
-        id: 0,
+    
 
-        serialNumber: '',
-        name: '',
-        weight: 0,
-        material: '',
-        description: '',
-        price: 0,
-        stock: 0,
+    useEffect(() => {
+        fetchProducts(page + 1, rowsPerPage, sortBy, sortDirection, minPrice, maxPrice, category, material, searchTerm)
+        .then(data => {
+            setProducts(data.items);
+            setTotalItems(data.totalItems);
+            setLoading(false);
+        })
+        .catch(console.error);
 
-        imageUrl: '',
-        categoryNames: []
-    };
-
-        useEffect(() => {
-            fetchProducts(page + 1, rowsPerPage, sortBy, sortDirection, minPrice, maxPrice, category, material, searchTerm)
-            .then(data => {
-                setProducts(data.items);
-                setTotalItems(data.totalItems);
-                setLoading(false);
-            })
-            .catch(console.error);
-
-            fetchCategories().then(setCategories).catch(console.error);
+        fetchCategories().then(setCategories).catch(console.error);
     }, [page, rowsPerPage, sortBy, sortDirection, minPrice, maxPrice, category, material, searchTerm]);
 
-    const handleOpenDialog = (product: ProductDto | null = null, mode: 'edit' | 'view' = 'edit') => {
+    const handleOpenDialog = (product: ProductDto, mode: 'edit' | 'view' = 'edit') => {
+        setEditProduct(product);
         if (mode === 'view') {
-            setEditProduct(product || null);
             setViewOnlyDialog(true);
         } else {
-            setEditProduct(product || { ...defaultProduct });
             setViewOnlyDialog(false);
         }
         setDialogOpen(true);
@@ -77,7 +78,6 @@ const ProductsPage = () => {
 
     const handleCloseDialog = () => {
         setDialogOpen(false);
-        setEditProduct(null);
     };
 
     const handleSaveProduct = async () => {
@@ -136,7 +136,7 @@ const ProductsPage = () => {
                     variant="contained"
                     color="primary"
                     startIcon={<Add />}
-                    onClick={() => handleOpenDialog()}
+                    onClick={() => handleOpenDialog(defaultProduct)}
                 >
                     Add New
                 </Button>

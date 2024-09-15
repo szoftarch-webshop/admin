@@ -20,7 +20,7 @@ const LoginPage: React.FC = () => {
                 await checkAuthorization(); // Since it returns void, we don't need to handle the response
                 if (isAuthenticated)
                 {
-                    router.push('/products');
+                    router.push('/');
                 }
                 setLoading(false);
             } catch (error) {
@@ -42,7 +42,7 @@ const LoginPage: React.FC = () => {
             const response = await login(email, password, rememberMe);
 
             if (response.ok) {
-                router.push("/products");
+                router.push('/');
             } else {
                 setError('Login failed. Please check your email and password and try again.');
             }

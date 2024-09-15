@@ -1,5 +1,4 @@
-export default interface ProductDto {
-    id: number;
+interface ProductWithImageDto {
     serialNumber: string;
     name: string;
     weight: number;
@@ -7,7 +6,6 @@ export default interface ProductDto {
     description: string;
     price: number;
     stock: number;
-    imageUrl: string;
     image: File | null;
-    categoryNames: string[];
+    categoryNames: string[]; // Adjust to match backend
 }

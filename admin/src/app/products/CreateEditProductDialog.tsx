@@ -1,7 +1,8 @@
 import React from 'react';
 import {
     Dialog, DialogTitle, DialogContent, DialogActions, TextField, FormControl,
-    InputLabel, Select, MenuItem, Checkbox, ListItemText, Button
+    InputLabel, Select, MenuItem, Checkbox, ListItemText, Button,
+    Container
 } from '@mui/material';
 import ProductDto from '../dtos/productDto';
 import CategoryDto from '../dtos/categoryDto';
@@ -10,9 +11,9 @@ interface CreateEditProductDialogProps {
     open: boolean;
     onClose: () => void;
     onSave: () => void;
-    product: ProductDto | null;
+    product: ProductDto;
     categories: CategoryDto[];
-    setProduct: React.Dispatch<React.SetStateAction<ProductDto | null>>;
+    setProduct: React.Dispatch<React.SetStateAction<ProductDto>>;
     viewOnly: boolean;
 }
 
@@ -109,6 +110,14 @@ const CreateEditProductDialog: React.FC<CreateEditProductDialogProps> = ({
                         ))}
                     </Select>
                 </FormControl>
+                {!viewOnly && <Container fixed>
+                        <input
+                            accept="image/*"
+                            type="file"
+                            onChange={(e) => setProduct({ ...product, image: e.target.files ? e.target.files[0] : null })}
+                            style={{ marginTop: '20px' }}
+                        />
+                </Container>}
             </DialogContent>
             <DialogActions>
                 {viewOnly ? (

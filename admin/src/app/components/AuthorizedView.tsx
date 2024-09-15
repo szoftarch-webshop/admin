@@ -1,23 +1,13 @@
-import React, { useState, useEffect, createContext } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Box, CircularProgress } from '@mui/material';
-import { checkAuthorization } from '../services/authService';
 import Navbar from './Navbar';
-import { usePathname } from 'next/navigation';
-
-const UserContext = createContext({});
-
-interface User {
-    email: string;
-}
+import { useAuth } from '../contexts/AuthContext';
 
 function AuthorizeView(props: { children: React.ReactNode }) {
-    const [authorized, setAuthorized] = useState<boolean>(false);
     const [loading, setLoading] = useState<boolean>(true);
-    const [user, setUser] = useState<User>({ email: "" });
-
+    const { isAuthenticated, checkAuthorization } = useAuth();
     const router = useRouter();
-    const pathname = usePathname();
 
     useEffect(() => {
         const authorize = async () => {
@@ -26,31 +16,27 @@ function AuthorizeView(props: { children: React.ReactNode }) {
 
                 if (response.status === 200) {
                     const data = await response.json();
-                    setUser({ email: data.email });
-                    setAuthorized(true);
+                    setLoading(false);
                 } else if (response.status === 401) {
                     router.push('/login');
                 } else {
                     throw new Error(`Unexpected status code: ${response.status}`);
                 }
-            } catch (error: any) {
-                console.error("Authorization check failed:", error.message);
+            } catch (error) {
+                if (error instanceof Error) {
+                    console.error("Authorization check failed:", error.message);
+                } else {
+                    console.error("Authorization check failed:", error);
+                }
                 router.push('/login');
-            } finally {
-                setLoading(false);
             }
         };
-
-        authorize();
+        if(!isAuthenticated) {
+            authorize();
+        }
     }, [router]);
 
-    useEffect(() => {
-        if (!loading && !authorized) {
-            router.push('/login');
-        }
-    }, [loading, authorized, router]);
-
-    if (loading || !authorized) {
+    if (loading && !isAuthenticated) {
         return (
             <Box
                 display="flex"
@@ -65,10 +51,8 @@ function AuthorizeView(props: { children: React.ReactNode }) {
 
     return (
         <>
-            {pathname !== '/login' && <Navbar />}
-            <UserContext.Provider value={user}>
-                {props.children}
-            </UserContext.Provider>
+            <Navbar />
+            {props.children}
         </>
     );
 }

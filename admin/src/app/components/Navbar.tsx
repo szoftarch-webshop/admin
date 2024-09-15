@@ -2,10 +2,11 @@
 
 import { useRouter } from 'next/navigation';
 import { AppBar, Toolbar, Typography, Button, Container, Box } from '@mui/material';
-import { logout } from '../services/authService'; // Ensure this path is correct
+import { useAuth } from '../contexts/AuthContext';
 
 const Navbar = () => {
   const router = useRouter();
+  const { logout } = useAuth();
 
   const handleNavigation = (path: string) => {
     router.push(path);

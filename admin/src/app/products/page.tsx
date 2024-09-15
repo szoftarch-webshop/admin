@@ -5,7 +5,8 @@ import {
     Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
     Paper, IconButton, Button, Box, Typography, TextField, Select, MenuItem,
     FormControl, InputLabel, TablePagination,
-    ListItemText
+    ListItemText,
+    CircularProgress
 } from '@mui/material';
 import { Edit, Delete, Add, Visibility } from '@mui/icons-material';
 import AuthorizeView from '../components/AuthorizedView';
@@ -17,6 +18,7 @@ import CreateEditProductDialog from './CreateEditProductDialog';
 import ConfirmDeleteDialog from './ConfirmDeleteDialog';
 
 const ProductsPage = () => {
+    const [loading, setLoading] = useState<boolean>(true);
     const [products, setProducts] = useState<ProductDto[]>([]);
     const [categories, setCategories] = useState<CategoryDto[]>([]);
     const [dialogOpen, setDialogOpen] = useState(false);
@@ -50,7 +52,10 @@ const ProductsPage = () => {
 
     useEffect(() => {
         fetchProducts(sortBy, sortDirection, minPrice, maxPrice, category, material, searchTerm)
-            .then(data => setProducts(data.items))
+            .then(data => {
+                setProducts(data.items)
+                setLoading(false);
+            })
             .catch(console.error);
 
         fetchCategories().then(setCategories).catch(console.error);
@@ -212,7 +217,8 @@ const ProductsPage = () => {
                     </Select>
                 </FormControl>
             </Box>
-
+            
+            {!loading && (
             <TableContainer component={Paper} elevation={3} sx={{ width: '80%', margin: '0 auto', marginTop: "30px" }}>
                 <Table>
                     <TableHead>
@@ -262,6 +268,17 @@ const ProductsPage = () => {
                     onRowsPerPageChange={handleChangeRowsPerPage}
                 />
             </TableContainer>
+            )}
+            {loading && (
+                <Box
+                display="flex"
+                justifyContent="center"
+                alignItems="center"
+                height="40vh"
+                >
+                    <CircularProgress size={80} />
+                </Box>
+            )}
 
             <CreateEditProductDialog
                 open={dialogOpen}

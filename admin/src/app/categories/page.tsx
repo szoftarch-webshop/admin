@@ -3,7 +3,8 @@
 import React, { useEffect, useState } from 'react';
 import {
     Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-    Paper, IconButton, Button, Box, Typography, TablePagination
+    Paper, IconButton, Button, Box, Typography, TablePagination,
+    CircularProgress
 } from '@mui/material';
 import { Edit, Delete, Add } from '@mui/icons-material';
 import AuthorizeView from '../components/AuthorizedView';
@@ -14,6 +15,7 @@ import ConfirmDeleteDialog from './ConfirmDeleteDialog';
 import EditCategoryDialog from './EditCategoryDialog';
 
 const CategoriesPage = () => {
+    const [loading, setLoading] = useState<boolean>(true);
     const [categories, setCategories] = useState<CategoryDto[]>([]);
     const [openDialog, setOpenDialog] = useState(false);
     const [newCategoryName, setNewCategoryName] = useState('');
@@ -29,13 +31,11 @@ const CategoriesPage = () => {
 
     // Fetch categories on load
     useEffect(() => {
-        loadCategories();
+        fetchCategories().then(data => {
+            setCategories(data)
+            setLoading(false);
+        });
     }, []);
-
-    const loadCategories = async () => {
-        const data = await fetchCategories();
-        setCategories(data);
-    };
 
     const handleOpenDialog = () => {
         setOpenDialog(true);
@@ -58,14 +58,14 @@ const CategoriesPage = () => {
         if (editCategoryId !== null) {
             await updateCategory(editCategoryId, editCategoryName, editParentCategoryId || null);
             setEditDialogOpen(false);
-            await loadCategories();
+            await fetchCategories().then(data => setCategories(data));
         }
     };
 
     const handleCreateCategory = async () => {
         await createCategory(newCategoryName, parentCategoryId || null);
         handleCloseDialog();
-        await loadCategories();
+        await fetchCategories().then(data => setCategories(data));
     };
 
     const handleOpenConfirmDeleteDialog = (id: number) => {
@@ -118,7 +118,7 @@ const CategoriesPage = () => {
                     Add New
                 </Button>
             </Box>
-
+            {!loading && (
             <TableContainer component={Paper} elevation={3} sx={{ width: '80%', margin: '0 auto', marginTop: "30px" }}>
                 <Table>
                     <TableHead>
@@ -157,6 +157,17 @@ const CategoriesPage = () => {
                     onRowsPerPageChange={handleChangeRowsPerPage}
                 />
             </TableContainer>
+            )}
+            {loading && (
+                <Box
+                display="flex"
+                justifyContent="center"
+                alignItems="center"
+                height="40vh"
+                >
+                    <CircularProgress size={80} />
+                </Box>
+            )}
 
             <CreateCategoryDialog
                 open={openDialog}

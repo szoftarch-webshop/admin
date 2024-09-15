@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Container, TextField, Button, Typography, Box, Alert, FormControlLabel, Checkbox, CircularProgress } from '@mui/material';
 import { useRouter } from 'next/navigation';
-import { login, checkAuthorization } from '../services/authService';
+import { useAuth } from '../contexts/AuthContext';
 
 const LoginPage: React.FC = () => {
     const [email, setEmail] = useState<string>('');
@@ -12,6 +12,7 @@ const LoginPage: React.FC = () => {
     const [error, setError] = useState<string>('');
     const [loading, setLoading] = useState<boolean>(true);
     const router = useRouter();
+    const { login, checkAuthorization } = useAuth();
 
     useEffect(() => {
         const checkAuthStatus = async () => {

@@ -3,7 +3,8 @@
 import React, { useEffect, useState } from 'react';
 import {
     Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-    Paper, IconButton, TablePagination, Box, Typography
+    Paper, IconButton, TablePagination, Box, Typography,
+    CircularProgress
 } from '@mui/material';
 import { Edit, Delete, Visibility } from '@mui/icons-material';
 import AuthorizeView from '../components/AuthorizedView';
@@ -15,6 +16,7 @@ import EditStatusDialog from './EditStatusDialog';
 import ConfirmDeleteDialog from './ConfirmDeleteDialog';
 
 const OrdersPage = () => {
+    const [loading, setLoading] = useState<boolean>(true);
     const [orders, setOrders] = useState<OrderDto[]>([]);
     const [dialogOpen, setDialogOpen] = useState(false);
     const [viewOrder, setViewOrder] = useState<OrderDto | undefined>(undefined);
@@ -28,7 +30,10 @@ const OrdersPage = () => {
 
     useEffect(() => {
         fetchOrders()
-            .then(data => setOrders(data.items))
+            .then(data => {
+                setOrders(data.items)
+                setLoading(false);
+            })
             .catch(console.error);
     }, []);
 
@@ -103,6 +108,7 @@ const OrdersPage = () => {
                 <Typography variant="h3">Orders</Typography>
             </Box>
 
+            {!loading && (
             <TableContainer component={Paper} elevation={3} sx={{ width: '80%', margin: '0 auto', marginTop: "30px" }}>
                 <Table>
                     <TableHead>
@@ -150,6 +156,17 @@ const OrdersPage = () => {
                     onRowsPerPageChange={handleChangeRowsPerPage}
                 />
             </TableContainer>
+            )}
+            {loading && (
+                <Box
+                display="flex"
+                justifyContent="center"
+                alignItems="center"
+                height="40vh"
+                >
+                    <CircularProgress size={80} />
+                </Box>
+            )}
 
             {/* Dialog Components */}
             <OrderDetailsDialog open={dialogOpen} onClose={handleCloseDialog} order={viewOrder} />

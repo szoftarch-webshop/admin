@@ -4,6 +4,7 @@ import { Roboto } from 'next/font/google';
 import { ThemeProvider } from '@mui/material/styles';
 import theme from '../theme';
 import { Metadata } from "next";
+import { AuthProvider } from "./contexts/AuthContext";
 
 const roboto = Roboto({
   weight: ['300', '400', '500', '700'],
@@ -25,13 +26,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${roboto.variable}`}>
-        <AppRouterCacheProvider>
-          <ThemeProvider theme={theme}>
-            <main>
+        <AuthProvider>
+          <AppRouterCacheProvider>
+            <ThemeProvider theme={theme}>
               {children}
-            </main>
-          </ThemeProvider>
-        </AppRouterCacheProvider>
+            </ThemeProvider>
+          </AppRouterCacheProvider>
+        </AuthProvider>
       </body>
     </html>
   );

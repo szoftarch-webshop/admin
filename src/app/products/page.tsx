@@ -38,7 +38,7 @@ const ProductsPage = () => {
     const [dialogOpen, setDialogOpen] = useState(false);
     const [editProduct, setEditProduct] = useState<ProductDto>(defaultProduct);
     const [confirmDeleteDialogOpen, setConfirmDeleteDialogOpen] = useState(false);
-    const [productToDelete, setProductToDelete] = useState<number | null>(null);
+    const [productToDelete, setProductToDelete] = useState<number | undefined>(undefined);
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(5);
     const [totalItems, setTotalItems] = useState(0);
@@ -47,7 +47,7 @@ const ProductsPage = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [minPrice, setMinPrice] = useState<number | ''>('');
     const [maxPrice, setMaxPrice] = useState<number | ''>('');
-    const [category, setCategory] = useState<string>('');
+    const [categoryId, setCategoryId] = useState<number | undefined>(undefined);
     const [material, setMaterial] = useState<string>('');
     const [sortBy, setSortBy] = useState<string>('name');
     const [sortDirection, setSortDirection] = useState<string>('asc');
@@ -55,7 +55,7 @@ const ProductsPage = () => {
     
 
     useEffect(() => {
-        fetchProducts(page + 1, rowsPerPage, sortBy, sortDirection, minPrice, maxPrice, category, material, searchTerm)
+        fetchProducts(page + 1, rowsPerPage, sortBy, sortDirection, minPrice, maxPrice, categoryId, material, searchTerm)
         .then(data => {
             setProducts(data.items);
             setTotalItems(data.totalItems);
@@ -64,7 +64,7 @@ const ProductsPage = () => {
         .catch(console.error);
 
         fetchCategories().then(setCategories).catch(console.error);
-    }, [page, rowsPerPage, sortBy, sortDirection, minPrice, maxPrice, category, material, searchTerm]);
+    }, [page, rowsPerPage, sortBy, sortDirection, minPrice, maxPrice, categoryId, material, searchTerm]);
 
     const handleOpenDialog = (product: ProductDto, mode: 'edit' | 'view' = 'edit') => {
         setEditProduct(product);
@@ -84,7 +84,7 @@ const ProductsPage = () => {
         if (editProduct) {
             await saveProduct(editProduct);
             setDialogOpen(false);
-            fetchProducts(page + 1, rowsPerPage, sortBy, sortDirection, minPrice, maxPrice, category, material, searchTerm)
+            fetchProducts(page + 1, rowsPerPage, sortBy, sortDirection, minPrice, maxPrice, categoryId, material, searchTerm)
                 .then(data => setProducts(data.items))
                 .catch(console.error);
         }
@@ -98,11 +98,11 @@ const ProductsPage = () => {
 
     const handleCloseConfirmDeleteDialog = () => {
         setConfirmDeleteDialogOpen(false);
-        setProductToDelete(null);
+        setProductToDelete(undefined);
     };
 
     const handleConfirmDelete = async () => {
-        if (productToDelete !== null) {
+        if (productToDelete !== undefined) {
             await deleteProduct(productToDelete);
             setProducts(products.filter((product) => product.id !== productToDelete));
             setConfirmDeleteDialogOpen(false);
@@ -151,8 +151,8 @@ const ProductsPage = () => {
                 setMaxPrice={setMaxPrice}
                 material={material}
                 setMaterial={setMaterial}
-                category={category}
-                setCategory={setCategory}
+                categoryId={categoryId}
+                setCategoryId={setCategoryId}
                 sortBy={sortBy}
                 setSortBy={setSortBy}
                 sortDirection={sortDirection}

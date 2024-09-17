@@ -10,7 +10,7 @@ export async function fetchProducts(
     sortDirection: string = "asc",
     minPrice?: number | '',
     maxPrice?: number | '',
-    category?: string,
+    category?: number,
     material?: string,
     searchTerm?: string
 ): Promise<PaginatedResult<ProductDto>> {
@@ -28,7 +28,7 @@ export async function fetchProducts(
             queryParams.append('maxPrice', maxPrice.toString());
         }
         if (category) {
-            queryParams.append('category', category);
+            queryParams.append('category', category.toString());
         }
         if (material) {
             queryParams.append('material', material);

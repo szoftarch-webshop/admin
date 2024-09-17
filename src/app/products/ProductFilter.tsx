@@ -11,7 +11,7 @@ interface ProductFilterProps {
     minPrice: number | '';
     maxPrice: number | '';
     material: string;
-    category: string;
+    categoryId: number | undefined;
     sortBy: string;
     sortDirection: string;
     categories: CategoryDto[];
@@ -19,14 +19,14 @@ interface ProductFilterProps {
     setMinPrice: (value: number | '') => void;
     setMaxPrice: (value: number | '') => void;
     setMaterial: (value: string) => void;
-    setCategory: (value: string) => void;
+    setCategoryId: (value: number | undefined) => void;
     setSortBy: (value: string) => void;
     setSortDirection: (value: string) => void;
 }
 
 const ProductFilter: React.FC<ProductFilterProps> = ({
     searchTerm, setSearchTerm, minPrice, setMinPrice, maxPrice, setMaxPrice,
-    material, setMaterial, category, setCategory, sortBy, setSortBy,
+    material, setMaterial, categoryId, setCategoryId, sortBy, setSortBy,
     sortDirection, setSortDirection, categories
 }) => {
     return (
@@ -73,15 +73,15 @@ const ProductFilter: React.FC<ProductFilterProps> = ({
             <FormControl variant="outlined" sx={{ flex: 1 }}>
                 <InputLabel>Category</InputLabel>
                 <Select
-                    value={category}
-                    onChange={(e) => setCategory(e.target.value as string)}
+                    value={categoryId}
+                    onChange={(e) => setCategoryId(e.target.value as number | undefined)}
                     label="Category"
                 >
                     <MenuItem key={'All'} value={undefined} sx={{padding: '15px'}}>
                         <ListItemText primary={'All'} />
                     </MenuItem>
                     {categories.map((cat) => (
-                        <MenuItem key={cat.id} value={cat.name} sx={{padding: '15px'}}>
+                        <MenuItem key={cat.id} value={cat.id} sx={{padding: '15px'}}>
                             <ListItemText primary={cat.name} />
                         </MenuItem>
                     ))}

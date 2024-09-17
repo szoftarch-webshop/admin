@@ -70,18 +70,19 @@ const ProductFilter: React.FC<ProductFilterProps> = ({
                 onChange={(e) => setMaxPrice(e.target.value ? parseInt(e.target.value) : '')}
                 sx={{ flex: 1 }}
             />
-            <FormControl variant="outlined" sx={{ flex: 1 }}>
+            <FormControl variant="outlined" sx={{ flex: 1, height: 56 }}>
                 <InputLabel>Category</InputLabel>
                 <Select
                     value={categoryId}
                     onChange={(e) => setCategoryId(e.target.value as number | undefined)}
                     label="Category"
+                    sx={{ height: 56 }}
                 >
-                    <MenuItem key={'All'} value={undefined} sx={{padding: '15px'}}>
+                    <MenuItem key={'All'} value={undefined}>
                         <ListItemText primary={'All'} />
                     </MenuItem>
                     {categories.map((cat) => (
-                        <MenuItem key={cat.id} value={cat.id} sx={{padding: '15px'}}>
+                        <MenuItem key={cat.id} value={cat.id}>
                             <ListItemText primary={cat.name} />
                         </MenuItem>
                     ))}

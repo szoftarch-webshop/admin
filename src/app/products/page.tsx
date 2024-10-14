@@ -3,7 +3,8 @@
 import React, { useEffect, useState } from 'react';
 import {
     Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-    Paper, IconButton, Button, Box, Typography, CircularProgress, TablePagination
+    Paper, IconButton, Button, Box, Typography, CircularProgress, TablePagination,
+    Tooltip
 } from '@mui/material';
 import { Edit, Delete, Add, Visibility } from '@mui/icons-material';
 import AuthorizeView from '../components/AuthorizedView';
@@ -14,6 +15,7 @@ import { fetchCategories } from '../services/categoryService';
 import CreateEditProductDialog from './CreateEditProductDialog';
 import ConfirmDeleteDialog from './ConfirmDeleteDialog';
 import ProductFilter from './ProductFilter';  // Import the new ProductFilter component
+import { backendUrl } from '../services/backendUrl';
 
 
 const ProductsPage = () => {
@@ -52,16 +54,16 @@ const ProductsPage = () => {
     const [sortBy, setSortBy] = useState<string>('name');
     const [sortDirection, setSortDirection] = useState<string>('asc');
 
-    
+
 
     useEffect(() => {
         fetchProducts(page + 1, rowsPerPage, sortBy, sortDirection, minPrice, maxPrice, categoryId, material, searchTerm)
-        .then(data => {
-            setProducts(data.items);
-            setTotalItems(data.totalItems);
-            setLoading(false);
-        })
-        .catch(console.error);
+            .then(data => {
+                setProducts(data.items);
+                setTotalItems(data.totalItems);
+                setLoading(false);
+            })
+            .catch(console.error);
 
         fetchCategories().then(setCategories).catch(console.error);
     }, [page, rowsPerPage, sortBy, sortDirection, minPrice, maxPrice, categoryId, material, searchTerm]);
@@ -141,7 +143,7 @@ const ProductsPage = () => {
                     Add New
                 </Button>
             </Box>
-            
+
             <ProductFilter
                 searchTerm={searchTerm}
                 setSearchTerm={setSearchTerm}
@@ -161,62 +163,74 @@ const ProductsPage = () => {
             />
 
             {!loading && (
-            <TableContainer component={Paper} elevation={3} sx={{ width: '80%', margin: '0 auto', marginTop: "30px" }}>
-                <Table>
-                    <TableHead>
-                        <TableRow>
-                            <TableCell>Id</TableCell>
-                            <TableCell>Name</TableCell>
-                            <TableCell>Serial Number</TableCell>
-                            <TableCell>Material</TableCell>
-                            <TableCell>Price</TableCell>
-                            <TableCell>Stock</TableCell>
-                            <TableCell>Categories</TableCell>
-                            <TableCell style={{ width: 150, textAlign: 'center' }}>Actions</TableCell>
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {products.map((product) => (
-                            <TableRow key={product.id}>
-                                <TableCell>{product.id}</TableCell>
-                                <TableCell>{product.name}</TableCell>
-                                <TableCell>{product.serialNumber}</TableCell>
-                                <TableCell>{product.material}</TableCell>
-                                <TableCell>{product.price}</TableCell>
-                                <TableCell>{product.stock}</TableCell>
-                                <TableCell>{product.categoryNames.join(', ')}</TableCell>
-                                <TableCell style={{ width: 150, textAlign: 'center'}}>
-                                    <IconButton color="primary" onClick={() => handleOpenDialog(product, 'view')}>
-                                        <Visibility />
-                                    </IconButton>
-                                    <IconButton color="primary" onClick={() => handleOpenDialog(product)}>
-                                        <Edit />
-                                    </IconButton>
-                                    <IconButton color="error" onClick={() => handleOpenConfirmDeleteDialog(product.id)}>
-                                        <Delete />
-                                    </IconButton>
-                                </TableCell>
+                <TableContainer component={Paper} elevation={3} sx={{ width: '80%', margin: '0 auto', marginTop: "30px" }}>
+                    <Table>
+                        <TableHead>
+                            <TableRow>
+                                <TableCell>Id</TableCell>
+                                <TableCell>Name</TableCell>
+                                <TableCell>Serial Number</TableCell>
+                                <TableCell>Material</TableCell>
+                                <TableCell>Price</TableCell>
+                                <TableCell>Stock</TableCell>
+                                <TableCell>Categories</TableCell>
+                                <TableCell style={{ width: 150, textAlign: 'center' }}>Actions</TableCell>
                             </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-                <TablePagination
-                    rowsPerPageOptions={[5, 10, 25]}
-                    component="div"
-                    count={totalItems}
-                    rowsPerPage={rowsPerPage}
-                    page={page}
-                    onPageChange={handleChangePage}
-                    onRowsPerPageChange={handleChangeRowsPerPage}
-                />
-            </TableContainer>
+                        </TableHead>
+                        <TableBody>
+                            {products.map((product) => (
+                                <TableRow key={product.id}>
+                                    <TableCell>{product.id}</TableCell>
+                                    <TableCell>{product.name}</TableCell>
+                                    <TableCell>{product.serialNumber}</TableCell>
+                                    <TableCell>{product.material}</TableCell>
+                                    <TableCell>{product.price}</TableCell>
+                                    <TableCell>{product.stock}</TableCell>
+                                    <TableCell>{product.categoryNames.join(', ')}</TableCell>
+                                    <TableCell style={{ width: 150, textAlign: 'center' }}>
+                                        <Tooltip
+                                            title={
+                                                <img
+                                                    src={`${backendUrl}/${product.imageUrl}`}
+                                                    alt={product.name}
+                                                    style={{ width: '100px', height: 'auto' }}
+                                                />
+                                            }
+                                            arrow
+                                            placement="top"
+                                        >
+                                            <IconButton color="primary" onClick={() => handleOpenDialog(product, 'view')}>
+                                                <Visibility />
+                                            </IconButton>
+                                        </Tooltip>
+                                        <IconButton color="primary" onClick={() => handleOpenDialog(product)}>
+                                            <Edit />
+                                        </IconButton>
+                                        <IconButton color="error" onClick={() => handleOpenConfirmDeleteDialog(product.id)}>
+                                            <Delete />
+                                        </IconButton>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                    <TablePagination
+                        rowsPerPageOptions={[5, 10, 25]}
+                        component="div"
+                        count={totalItems}
+                        rowsPerPage={rowsPerPage}
+                        page={page}
+                        onPageChange={handleChangePage}
+                        onRowsPerPageChange={handleChangeRowsPerPage}
+                    />
+                </TableContainer>
             )}
             {loading && (
                 <Box
-                display="flex"
-                justifyContent="center"
-                alignItems="center"
-                height="40vh"
+                    display="flex"
+                    justifyContent="center"
+                    alignItems="center"
+                    height="40vh"
                 >
                     <CircularProgress size={80} />
                 </Box>

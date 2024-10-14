@@ -55,13 +55,34 @@ export const saveProduct = async (product: ProductDto): Promise<void> => {
     const method = product.id ? 'PUT' : 'POST';
     const url = product.id ? `${productApi}/${product.id}` : productApi;
 
+    const formData = new FormData();
+
+    // Convert productDto to JSON string
+    formData.append('productDtoJson', JSON.stringify({
+        id: product.id,
+        serialNumber: product.serialNumber,
+        name: product.name,
+        weight: product.weight,
+        material: product.material,
+        description: product.description,
+        price: product.price,
+        stock: product.stock,
+        imageUrl: product.imageUrl,
+        categoryNames: product.categoryNames,
+    }));
+
+    // Attach the image if present
+    if (product.image) {
+        formData.append('image', product.image);
+    }
+
     await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(product),
+        body: formData,
         credentials: 'include',
     });
 };
+
 
 export const deleteProduct = async (id: number): Promise<void> => {
     await fetch(`${productApi}/${id}`, { method: 'DELETE', credentials: 'include' });

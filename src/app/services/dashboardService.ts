@@ -2,8 +2,9 @@ import CategoryProductCountDto from "../dtos/dashboard/categoryProductCountDto";
 import CategorySalesPercentageDto from "../dtos/dashboard/categorySalesPercentageDto";
 import MonthlyCategorySalesDto from "../dtos/dashboard/monthlyCategorySalesDto";
 import ProductSalesDto from "../dtos/dashboard/productSalesDto";
+import { backendUrl } from "./backendUrl";
 
-const dashboardApi = "https://localhost:44315/api/Dashboard";
+const dashboardApi = `${backendUrl}/api/Dashboard`;
 
 // Helper function to append query parameters
 const buildUrlWithCategoryId = (url: string, categoryId?: number): string => {

@@ -1,6 +1,7 @@
 import CategoryDto from '../dtos/categoryDto';
+import { backendUrl } from './backendUrl';
 
-const categoryApi = "https://localhost:44315/api/Category";
+const categoryApi = `${backendUrl}/api/Category`;
 
 // Fetch all categories
 export async function fetchCategories(): Promise<CategoryDto[]> {

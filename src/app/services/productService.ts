@@ -1,7 +1,8 @@
 import ProductDto from '../dtos/productDto';
 import PaginatedResult from '../dtos/paginatedResultDto';
+import { backendUrl } from './backendUrl';
 
-const productApi = "https://localhost:44315/api/Product";
+const productApi = `${backendUrl}/api/Product`;
 
 export async function fetchProducts(
     pageNumber: number = 1,

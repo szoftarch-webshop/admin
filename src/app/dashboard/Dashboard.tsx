@@ -4,21 +4,6 @@ import { Box, Typography, Paper, MenuItem, Select, FormControl, InputLabel, Sele
 import { fetchCategories } from '../services/categoryService'; // Import category service
 import { fetchMonthlySalesByCategory, fetchProductCountByCategory, fetchProductSalesPercentage, fetchTopSellingProducts } from '../services/dashboardService';
 
-const months: { [key: string]: string } = {
-    Jan: '1',
-    Feb: '2',
-    Mar: '3',
-    Apr: '4',
-    May: '5',
-    Jun: '6',
-    Jul: '7',
-    Aug: '8',
-    Sep: '9',
-    Oct: '10',
-    Nov: '11',
-    Dec: '12',
-};
-
 const monthNames: { [key: string]: string } = {
     '1': 'Jan',
     '2': 'Feb',
@@ -40,15 +25,13 @@ const Dashboard: React.FC = () => {
     const [salesPercentageData, setSalesPercentageData] = useState<any[]>([]);
     const [salesData, setSalesData] = useState<any[]>([]);
     const [monthlyCategorySalesData, setMonthlyCategorySalesData] = useState<any[]>([]);
-    const [mainCategories, setMainCategories] = useState<any[]>([]); // Dynamic categories
+    const [mainCategories, setMainCategories] = useState<any[]>([]);
     const [categoryHierarchy, setCategoryHierarchy] = useState<any>({});
     const [selectedMainCategory, setSelectedMainCategory] = useState<number | 'all'>('all');
 
     useEffect(() => {
-        // Fetch all categories dynamically
         fetchCategories()
             .then((data) => {
-                // Separate categories into main categories and build the hierarchy
                 const mainCats = data.filter((cat: any) => cat.parentId === null);
                 const hierarchy = data.reduce((acc: any, cat: any) => {
                     if (cat.parentId) {
@@ -87,43 +70,33 @@ const Dashboard: React.FC = () => {
             .catch((error) => console.error('Error fetching monthly category sales:', error));
     }, [selectedMainCategory]);
 
-    // Colors for the pie charts
     const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#AF19FF'];
 
-    // Handle main category change
     const handleCategoryChange = (event: SelectChangeEvent) => {
         const value = event.target.value === 'all' ? 'all' : parseInt(event.target.value);
         setSelectedMainCategory(value as number | 'all');
     };
 
-    // Function to format monthly category sales data
-    // Function to format monthly category sales data
     const formatMonthlyCategorySales = (data: any[]) => {
         const formattedData: any[] = [];
 
         data.forEach((item) => {
-            const monthNumber = item.month.toString().padStart(2, '0'); // Convert the month integer to a string and pad with zeros if necessary
+            const monthNumber = item.month.toString().padStart(2, '0');
             let existingMonth = formattedData.find((entry) => entry.month === monthNumber);
             if (!existingMonth) {
-                existingMonth = { month: monthNumber }; // Store month as zero-padded string
+                existingMonth = { month: monthNumber };
                 formattedData.push(existingMonth);
             }
             existingMonth[item.category] = item.salesCount;
         });
 
-        // Sort the formatted data based on the numeric month value
         return formattedData.sort((a, b) => parseInt(a.month) - parseInt(b.month));
     };
 
-
-    // Get the relevant categories to display based on the selection
     const displayedCategories = categoryData;
 
-
-    // Get the relevant sales percentage data based on the selection
     const displayedSalesPercentage = salesPercentageData;
 
-    // Dynamically generate bars for the stacked bar chart
     const generateCategoryBars = () => {
         return mainCategories.map((category: any, index: number) => (
             <Bar key={category.id} dataKey={category.name} stackId="a" fill={COLORS[index % COLORS.length]} />

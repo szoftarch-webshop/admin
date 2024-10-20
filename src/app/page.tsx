@@ -2,12 +2,13 @@
 
 import { Typography } from "@mui/material";
 import AuthorizeView from "./components/AuthorizedView";
+import Dashboard from "./dashboard/Dashboard";
 
 export default function Home() {
   return (
     <AuthorizeView>
       <Typography>
-        Home page
+        <Dashboard></Dashboard>
       </Typography>
     </AuthorizeView>
   );

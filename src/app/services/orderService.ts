@@ -1,16 +1,17 @@
 import OrderDto from '../dtos/orderDto';
 import { OrderStatus } from '../dtos/orderStatus';
 import PaginatedResult from '../dtos/paginatedResultDto';
+import { backendUrl } from './backendUrl';
 
-const orderApi = "https://localhost:44315/api/Order";
+const orderApi = `${backendUrl}/api/Order`;
 
 export async function fetchOrders(
-    pageNumber: number = 1, 
-    pageSize: number = 10, 
-    sortBy: string = "date", 
-    sortDirection: string = "asc", 
-    status?: string, 
-    startDate?: string, 
+    pageNumber: number = 1,
+    pageSize: number = 10,
+    sortBy: string = "date",
+    sortDirection: string = "asc",
+    status?: string,
+    startDate?: string,
     endDate?: string
 ): Promise<PaginatedResult<OrderDto>> {
     try {
@@ -49,13 +50,13 @@ export const deleteOrder = async (id: number): Promise<void> => {
     await fetch(`${orderApi}/${id}`, { method: 'DELETE', credentials: 'include' });
 };
 
-export const updateOrderStatus = async (id:number, status: OrderStatus): Promise<void> => {
-    await fetch(`${orderApi}/${id}/status`, { 
-        method: 'PUT', 
-        credentials: 'include', 
+export const updateOrderStatus = async (id: number, status: OrderStatus): Promise<void> => {
+    await fetch(`${orderApi}/${id}/status`, {
+        method: 'PUT',
+        credentials: 'include',
         headers: {
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ 'newStatus': status }) 
+        body: JSON.stringify({ 'newStatus': status })
     });
 };

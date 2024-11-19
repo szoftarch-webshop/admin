@@ -1,36 +1,65 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Admin Portal Setup Guide
 
-## Getting Started
+This document provides instructions on how to build, run, and obtain the build files for the Admin Portal of the Webshop application.
 
-First, run the development server:
+## 1. Building the Docker Image
+
+Before running the application, you need to build the Docker image. To do this, open a terminal and run the following command:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+docker build -t admin-portal .
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+This will build the Docker image with the tag `admin-portal`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 2. Running the Container
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+After building the image, you can run the Admin Portal container. To start it, execute the following command:
 
-## Learn More
+```bash
+docker run --rm --network="host" admin-portal
+```
 
-To learn more about Next.js, take a look at the following resources:
+**Explanation**:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- `--rm`: Automatically removes the container once it stops, so no cleanup is required.
+- `--network="host"`: Ensures that the container shares the host machine's network, allowing it to access backend services running on the host.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+This command will start the Admin Portal, and you can access it at `http://localhost:3000` on your machine (or use the IP for the host machine, depending on your network setup).
 
-## Deploy on Vercel
+## 3. Obtaining Build Files (Optional)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+If you need to retrieve the build artifacts (such as the `.next` directory) generated during the build process, you can copy them from the container to your local machine.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Follow these steps:
+
+### 1. Run the container in detached mode
+
+```bash
+docker run -d --name admin-portal admin-portal sleep 3600
+```
+
+- `-d`: Runs the container in detached mode (in the background).
+- `sleep 3600`: Keeps the container running for 1 hour, so you have time to copy the build files.
+
+### 2. Copy the build files from the container to your local machine
+
+```bash
+sudo docker cp admin-portal:/admin-portal/.next .
+```
+
+This will copy the `.next` directory from the container's `/admin-portal/.next` path to your current directory on the host machine.
+
+### 3. Clean up
+
+After you've copied the necessary files, stop and remove the container to clean up:
+
+```bash
+docker stop admin-portal
+docker rm admin-portal
+```
+
+## Additional Notes
+
+- Ensure that Docker is installed and running on your machine before you attempt to build or run the container.
+- If you're working with a remote backend, make sure it's configured to allow access from the container (e.g., by using `host.docker.internal` on Docker for Mac/Windows or setting up proper IP access on Linux).

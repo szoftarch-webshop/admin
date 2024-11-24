@@ -32,8 +32,12 @@ const CreateEditProductDialog: React.FC<CreateEditProductDialogProps> = ({
             // If a new image is selected, create a preview URL
             setImagePreviewUrl(URL.createObjectURL(product.image));
         } else if (product.imageUrl) {
-            // If in edit/view mode, show the existing image URL
-            setImagePreviewUrl(`${backendUrl}/${product.imageUrl}`);
+            if(product.imageUrl.startsWith('http')){
+                setImagePreviewUrl(`${product.imageUrl}`);
+            }
+            else{
+                setImagePreviewUrl(`${backendUrl}/${product.imageUrl}`);
+            }
         } else {
             // No image selected/uploaded
             setImagePreviewUrl(null);

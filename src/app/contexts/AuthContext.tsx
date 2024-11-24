@@ -2,6 +2,8 @@
 
 import React, { createContext, useState, ReactNode, useContext } from 'react';
 import User from '../dtos/user';
+import { backendUrl } from '../services/backendUrl';
+
 
 interface AuthContextType {
     user: User | {};
@@ -18,10 +20,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
 
     const login = async (email: string, password: string, rememberMe: boolean) => {
-        const loginApi = "https://localhost:44315";
         const cookiesUrl = rememberMe ? "/login?useCookies=true" : "/login?useSessionCookies=true";
 
-        const response = await fetch(loginApi + cookiesUrl, {
+        const response = await fetch(backendUrl + cookiesUrl, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -42,11 +43,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
 
     const logout = async () => {
-        const logoutApi = "https://localhost:44315/logout";
-  
+        const logoutApi = backendUrl + "/logout";
+
         await fetch(logoutApi, {
-          method: 'POST',
-          credentials: 'include',
+            method: 'POST',
+            credentials: 'include',
         });
 
         setIsAuthenticated(false);
@@ -54,7 +55,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
 
     const checkAuthorization = async () => {
-        const response = await fetch('https://localhost:44315/pingauth', {
+        const response = await fetch(backendUrl + '/pingauth', {
             method: 'GET',
             credentials: 'include',
         });

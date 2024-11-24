@@ -191,7 +191,7 @@ const ProductsPage = () => {
                                         <Tooltip
                                             title={
                                                 <img
-                                                    src={`${backendUrl}/${product.imageUrl}`}
+                                                    src={product.imageUrl.startsWith('http') ? product.imageUrl : `${backendUrl}/${product.imageUrl}`}
                                                     alt={product.name}
                                                     style={{ width: '100px', height: 'auto' }}
                                                 />
